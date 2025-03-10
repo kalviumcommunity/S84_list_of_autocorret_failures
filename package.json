@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.12.1",
+    "nodemon": "^3.1.9"
+  },
+  "name": "s84_list_of_autocorret_failures",
+  "version": "1.0.0",
+  "description": "Here's a structured **README.md** file for your **\"List of AutoCorrect Failures\"** project. You can modify it as needed.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kalviumcommunity/S84_list_of_autocorret_failures.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kalviumcommunity/S84_list_of_autocorret_failures/issues"
+  },
+  "homepage": "https://github.com/kalviumcommunity/S84_list_of_autocorret_failures#readme"
+}
