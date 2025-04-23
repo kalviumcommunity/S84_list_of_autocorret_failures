@@ -1,0 +1,15 @@
+meta {
+  name: Delete failure
+  type: http
+  seq: 6
+}
+
+delete {
+  url: http://localhost:3000/api/failures/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}

@@ -40,3 +40,6 @@ app.get('/ping', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
+
+const failureRoutes = require('./routes'); // or './routes/routes.js'
+app.use('/api', failureRoutes);
