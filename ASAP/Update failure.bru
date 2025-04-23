@@ -5,11 +5,19 @@ meta {
 }
 
 put {
-  url: http://localhost:3000/api/failures/:id
-  body: none
+  url: http://localhost:3000/api/failures/680894e12b8164ae7d020afd
+  body: json
   auth: inherit
 }
 
-params:path {
-  id: 
+body:json {
+  {
+    "text": "I love you moron.",
+    "intended": "I love you more.",
+    "failLevel": "moderate",
+    "submittedBy": "user202",
+    "context": "Cute chat gone wrong",
+    "timestamp": "2025-04-23T14:30:00Z"
+  }
+  
 }
