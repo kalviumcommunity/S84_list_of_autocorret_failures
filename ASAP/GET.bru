@@ -4,8 +4,21 @@ meta {
   seq: 1
 }
 
-get {
-  url: http://localhost:3000/ping
-  body: none
+delete {
+  url: http://localhost:3000/api/failures/
+  body: json
   auth: inherit
+}
+
+body:json {
+  {
+    "text": "I have ducking homework!",
+    "intended": "I have f*cking homework!",
+    "failLevel": "moderate",
+    "submittedBy": "user456",
+    "context": "Frustrated with schoolwork",
+    "timestamp": "2025-04-23T11:00:00Z"
+  }
+  
+  
 }
