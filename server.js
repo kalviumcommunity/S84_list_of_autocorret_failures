@@ -1,45 +1,39 @@
 const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-const mongoURI = process.env.MONGO_URL;
+const PORT = 3000;
 
-let dbStatus = "🔴 Not connected";
-
-// MongoDB Connection
-mongoose
-  .connect(mongoURI)
-  .then(() => {
-    dbStatus = "🟢 Connected to MongoDB";
-    console.log("✅ MongoDB Connected Successfully!");
-  })
-  .catch((err) => {
-    dbStatus = "🔴 MongoDB Connection Failed";
-    console.error("❌ MongoDB Connection Error:", err);
-  });
-
-// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Home route
-app.get('/', (req, res) => {
-  res.send(`Hello! Database status: ${dbStatus}`);
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+.then(() => console.log("MongoDB connected"))
+.catch((err) => console.error(err));
+
+// Schema & Model
+const failSchema = new mongoose.Schema({
+  text: String,
+  intended: String,
+  failLevel: String,
+  context: String,
+  submittedBy: String,
+  timestamp: String,
 });
 
-// Ping route
-app.get('/ping', (req, res) => {
-  res.send('pong');
+const Fail = mongoose.model('Fail', failSchema);
+
+// Route to get fails
+app.get('/fails', async (req, res) => {
+  try {
+    const fails = await Fail.find();
+    res.json(fails);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
 });
 
-// Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
-
-const failureRoutes = require('./routes'); // or './routes/routes.js'
-app.use('/api', failureRoutes);
