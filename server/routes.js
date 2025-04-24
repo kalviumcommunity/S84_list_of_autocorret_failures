@@ -37,4 +37,15 @@ router.delete('/failures/:id', async (req, res) => {
   res.json({ message: 'Deleted successfully' });
 });
 
+router.post("/fails", async (req, res) => {
+  try {
+    const newFail = new Failure(req.body);
+    await newFail.save();
+    res.status(201).json(newFail);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+
 module.exports = router;
