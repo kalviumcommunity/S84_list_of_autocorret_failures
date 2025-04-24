@@ -86,22 +86,74 @@ export default function App() {
           <p><strong>Timestamp:</strong> 2025-04-23T12:00:00Z</p>
         </section>
 
-        {/* ✅ Add Fail Form */}
-        <section className="info-section">
-          <h2>Submit a Fail</h2>
-          <form onSubmit={handleSubmit}>
-            <input name="text" placeholder="Text" value={formData.text} onChange={handleChange} required />
-            <input name="intended" placeholder="Intended" value={formData.intended} onChange={handleChange} required />
-            <input name="context" placeholder="Context" value={formData.context} onChange={handleChange} required />
-            <input name="submittedBy" placeholder="Submitted By" value={formData.submittedBy} onChange={handleChange} required />
-            <select name="failLevel" value={formData.failLevel} onChange={handleChange}>
-              <option value="low">Low</option>
-              <option value="moderate">Moderate</option>
-              <option value="high">High</option>
-            </select>
-            <button type="submit">Add Fail</button>
-          </form>
-        </section>
+        <section className="info-section submit-form">
+  <h2>Submit a New Autocorrect Fail</h2>
+  <form onSubmit={handleSubmit} className="fail-form">
+    <div className="form-group">
+      <label>Autocorrected Text</label>
+      <input
+        type="text"
+        name="text"
+        placeholder="E.g., ‘Let’s meat at noon’"
+        value={formData.text}
+        onChange={handleChange}
+        required
+      />
+    </div>
+
+    <div className="form-group">
+      <label>Intended Text</label>
+      <input
+        type="text"
+        name="intended"
+        placeholder="E.g., ‘Let’s meet at noon’"
+        value={formData.intended}
+        onChange={handleChange}
+        required
+      />
+    </div>
+
+    <div className="form-group">
+      <label>Context</label>
+      <input
+        type="text"
+        name="context"
+        placeholder="E.g., Planning lunch"
+        value={formData.context}
+        onChange={handleChange}
+        required
+      />
+    </div>
+
+    <div className="form-group">
+      <label>Submitted By</label>
+      <input
+        type="text"
+        name="submittedBy"
+        placeholder="Your name or nickname"
+        value={formData.submittedBy}
+        onChange={handleChange}
+        required
+      />
+    </div>
+
+    <div className="form-group">
+      <label>Fail Level</label>
+      <select
+        name="failLevel"
+        value={formData.failLevel}
+        onChange={handleChange}
+      >
+        <option value="low">Low</option>
+        <option value="moderate">Moderate</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
+    <button type="submit" className="submit-btn">Submit Fail</button>
+  </form>
+</section>
+
 
         {/* Render dynamic fails from backend */}
         <section className="info-section">
