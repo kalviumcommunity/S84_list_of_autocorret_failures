@@ -1,55 +1,80 @@
-import React from "react";
-import "./App.css";
-import AutocorrectFail from './components/AutocorrectFail';
+  import "./App.css";
+  import AutocorrectFail from './components/AutocorrectFail';
+  import React, { useEffect, useState } from "react";
+  import axios from "axios";
 
-export default function App() {
-  return (
-    <div className="app-container">
-      <video autoPlay loop muted className="background-video">
-        <source src="/123.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+  export default function App() {
+    const [fails, setFails] = useState([]);
 
-      <div className="content">
-        <h1 className="site-title">List of Auto-Correct Fails</h1>
-        <p className="tagline">Welcome to the most hilarious collection of texting disasters!</p>
+    useEffect(() => {
+      axios.get("http://localhost:3000/failures")
+        .then(res => setFails(res.data))
+        .catch(err => console.error("Error fetching fails:", err));
+        console.log(fails)
+    }, []);
 
-        <section className="info-section">
-          <h2>What is this site about?</h2>
-          <p>
-            This project collects and showcases some of the funniest and weirdest auto-correct fails people have experienced. 
-            It's designed to entertain, and maybe make you feel better about your own typos.
-          </p>
-        </section>
+    return (
+      <div className="app-container">
+        {/* Background Video */}
+        <video autoPlay loop muted className="background-video">
+          <source src="/123.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
 
-        <section className="info-section">
-          <h2>Why this project?</h2>
-          <p>
-            It’s light-hearted, it’s relatable, and it gives you a fun way to work with full-stack tools, routes, databases, and more!
-          </p>
-        </section>
-        <section className="info-section">
-        <h2>failures </h2>
-        <p>
-           text: "Let’s meat at noon",  
-           </p>                   
-           <p> 
-           intended: "Let’s meet at noon",       
-           </p>
-           <p>       
-           failLevel: "moderate",
-           </p>
-           <p>                   
-           context: "Lunch planning",
-           </p>
-           <p>              
-           submittedBy: "funnyUser99", 
-           </p>
-           <p>           
-           timestamp: "2025-04-23T12:00:00Z"
-           </p>
-           </section>
+        {/* Content Section */}
+        <div className="content">
+          {/* Logo Title */}
+          <h1 className="site-title">
+            Silly Autocorrects
+          </h1>
+
+          {/* Tagline */}
+          <h1>List of Auto-corrects Failures</h1>
+          <p className="tagline">Welcome to the most hilarious collection of texting disasters!</p>
+
+          {/* About Sections */}
+          <section className="info-section">
+            <h2>What is this site about?</h2>
+            <p>
+              This project collects and showcases some of the funniest and weirdest auto-correct fails people have experienced. 
+              It's designed to entertain, and maybe make you feel better about your own typos.
+            </p>
+          </section>
+
+          <section className="info-section">
+            <h2>Why this project?</h2>
+            <p>
+              It’s light-hearted, it’s relatable, and it gives you a fun way to work with full-stack tools, routes, databases, and more!
+            </p>
+          </section>
+
+          {/* Example Failures */}
+          <section className="info-section">
+            <h2>Failures</h2>
+            <p><strong>Text:</strong> "Let’s meat at noon"</p>                   
+            <p><strong>Intended:</strong> "Let’s meet at noon"</p>
+            <p><strong>Fail Level:</strong> Moderate</p>
+            <p><strong>Context:</strong> Lunch planning</p>
+            <p><strong>Submitted By:</strong> funnyUser99</p>
+            <p><strong>Timestamp:</strong> 2025-04-23T12:00:00Z</p>
+          </section>
+
+          {/* Render dynamic fails from backend */}
+            <section className="info-section">
+              <h2>Fetched Failures</h2>
+              {fails.map((fail) => (
+                <div key={fail._id}>
+                  <p><strong>Text:</strong> {fail.text}</p>
+                  <p><strong>Intended:</strong> {fail.intended}</p>
+                  <p><strong>Fail Level:</strong> {fail.failLevel}</p>
+                  <p><strong>Context:</strong> {fail.context}</p>
+                  <p><strong>Submitted By:</strong> {fail.submittedBy}</p>
+                  <p><strong>Timestamp:</strong> {new Date(fail.timestamp).toLocaleString()}</p>
+                  <hr />
+                </div>
+              ))}
+            </section>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

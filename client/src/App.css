@@ -18,6 +18,7 @@ body, html, #root {
   min-height: 100vh;
   object-fit: cover;
   z-index: -2;
+  opacity: 0.8;
 }
 
 /* Transparent overlay for better readability */
@@ -42,10 +43,45 @@ body, html, #root {
 
 /* Site Title */
 .site-title {
-  font-size: 3.5rem;
+  font-size: 1.8rem; /* smaller size */
   font-weight: bold;
-  margin-bottom: 10px;
+  position: fixed;
+  top: 10px;       /* move higher */
+  left: 20px;     /* maintain right alignment */
+  z-index: 10;
   color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  animation: fadeIn 1.5s ease-in-out;
+  background: rgba(0, 0, 0, 0.3); /* subtle background for better readability */
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* Optional: Hover effect */
+.site-title:hover {
+  color: #ffcc00;
+  transform: scale(1.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Animation for logo */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Hover effect on logo */
+.site-title:hover {
+  color: #f39c12;
+  cursor: pointer;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
 }
 
 /* Tagline */
@@ -74,4 +110,25 @@ body, html, #root {
 .info-section p {
   font-size: 1.1rem;
   line-height: 1.6;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .site-title {
+    font-size: 2.5rem;
+    top: 10px;
+    right: 10px;
+  }
+
+  .tagline {
+    font-size: 1.3rem;
+  }
+
+  .info-section {
+    padding: 20px;
+  }
+
+  .content {
+    padding: 50px 20px;
+  }
 }
