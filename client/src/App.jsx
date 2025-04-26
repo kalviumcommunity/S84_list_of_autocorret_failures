@@ -13,6 +13,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [loginUsername, setLoginUsername] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notification, setNotification] = useState(null);
+  const [page, setPage] = useState(1);
 
   const fetchUsers = async () => {
     try {
@@ -37,8 +40,10 @@ export default function App() {
 
   const fetchFailsByUser = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:3000/failures/user/${userId}`);
-      setFilteredFails(response.data);
+      const response = await axios.get(`http://localhost:3000/failures/user/${userId}`, {
+        params: { page, limit: 5 },
+      });
+      setFilteredFails(response.data.failures);
     } catch (err) {
       console.error('Error fetching fails by user:', err);
       setError('Failed to fetch fails for this user. Please try again.');
@@ -53,8 +58,9 @@ export default function App() {
         { withCredentials: true }
       );
       setUser(response.data.user);
+      setNotification('Login successful!');
+      setTimeout(() => setNotification(null), 3000);
       setError(null);
-      alert(response.data.message);
     } catch (err) {
       console.error('Error logging in:', err);
       setError(err.response?.data?.error || 'Failed to login. Please try again.');
@@ -66,17 +72,28 @@ export default function App() {
       const response = await axios.post('http://localhost:3000/logout', {}, { withCredentials: true });
       setUser(null);
       setLoginUsername('');
+      setNotification('Logout successful!');
+      setTimeout(() => setNotification(null), 3000);
       setError(null);
-      alert(response.data.message);
     } catch (err) {
       console.error('Error logging out:', err);
       setError('Failed to logout. Please try again.');
     }
   };
 
+  const handleRefreshToken = async () => {
+    try {
+      await axios.post('http://localhost:3000/refresh-token', {}, { withCredentials: true });
+    } catch (err) {
+      console.error('Error refreshing token:', err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchFails();
+    const interval = setInterval(handleRefreshToken, 30 * 60 * 1000); // Refresh every 30 minutes
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -85,13 +102,14 @@ export default function App() {
     } else {
       setFilteredFails(fails);
     }
-  }, [selectedUserId, fails]);
+  }, [selectedUserId, fails, page]);
 
   const handleAddFail = (newFail) => {
     setFails([...fails, newFail]);
     setFilteredFails([...fails, newFail]);
+    setNotification('New fail added successfully!');
+    setTimeout(() => setNotification(null), 3000);
     setError(null);
-    alert('New fail added successfully!');
   };
 
   const handleDeleteFail = async (id) => {
@@ -99,14 +117,29 @@ export default function App() {
       try {
         await axios.delete(`http://localhost:3000/failures/${id}`, { withCredentials: true });
         fetchFails();
+        setNotification('Fail deleted successfully!');
+        setTimeout(() => setNotification(null), 3000);
         setError(null);
-        alert('Fail deleted successfully!');
       } catch (err) {
         console.error('Error deleting fail:', err);
         setError('Failed to delete fail. Please try again.');
       }
     }
   };
+
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = fails.filter(fail =>
+      fail.text.toLowerCase().includes(query) ||
+      fail.intended.toLowerCase().includes(query) ||
+      fail.submitted_by.toLowerCase().includes(query)
+    );
+    setFilteredFails(filtered);
+  };
+
+  const handleNextPage = () => setPage(page + 1);
+  const handlePrevPage = () => setPage(page > 1 ? page - 1 : 1);
 
   return (
     <Router>
@@ -143,9 +176,17 @@ export default function App() {
                       </button>
                     </div>
                   )}
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearch}
+                    placeholder="Search fails..."
+                    className="p-2 border rounded ml-4"
+                  />
                 </div>
                 <h1>List of Auto-correct Failures</h1>
                 <p className="tagline">Welcome to the most hilarious collection of texting disasters!</p>
+                {notification && <div className="notification">{notification}</div>}
                 {error && <p className="text-red-500">{error}</p>}
                 <section className="info-section">
                   <h2>What is this site about?</h2>
@@ -262,21 +303,41 @@ export default function App() {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <button onClick={handlePrevPage} className="submit-btn mr-2">Previous</button>
+                    <button onClick={handleNextPage} className="submit-btn">Next</button>
+                    <span> Page {page}</span>
+                  </div>
                 </section>
                 <section className="info-section">
-                  <h2>Fetched Failures</h2>
-                  {filteredFails.length === 0 ? (
-                    <p>No fails found for this user.</p>
-                  ) : (
-                    filteredFails.map((fail) => (
-                      <AutocorrectFail
-                        key={fail.id}
-                        {...fail}
-                        onDelete={() => handleDeleteFail(fail.id)}
-                      />
-                    ))
-                  )}
+                  <h2>Interactive Fail Gallery</h2>
+                  <div className="fail-gallery">
+                    {filteredFails.map((fail) => (
+                      <div key={fail.id} className="fail-card">
+                        <h3>{fail.text}</h3>
+                        <p><strong>Intended:</strong> {fail.intended}</p>
+                        <p><strong>Level:</strong> {fail.fail_level}</p>
+                        <button onClick={() => handleDeleteFail(fail.id)} className="submit-btn bg-red-500 hover:bg-red-600 mt-2">
+                          Delete
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </section>
+                {user && (
+                  <section className="info-section">
+                    <h2>Your Submitted Fails</h2>
+                    <div className="fail-gallery">
+                      {filteredFails.filter(fail => fail.created_by === user.id).map((fail) => (
+                        <div key={fail.id} className="fail-card">
+                          <h3>{fail.text}</h3>
+                          <p><strong>Intended:</strong> {fail.intended}</p>
+                          <p><strong>Level:</strong> {fail.fail_level}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             </div>
           }
