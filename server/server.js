@@ -2,13 +2,21 @@ require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const failureRoutes = require('./routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Configure CORS to allow credentials
+app.use(
+  cors({
+    origin: 'http://localhost:5173', // Frontend URL (Vite default port)
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 
 // MySQL connection configuration
 const pool = mysql.createPool({
@@ -26,7 +34,6 @@ app.use('/', failureRoutes);
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   try {
-    // Create tables if they don't exist
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,

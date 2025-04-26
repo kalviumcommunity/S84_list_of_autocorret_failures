@@ -11,6 +11,8 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [error, setError] = useState(null);
+  const [username, setUsername] = useState(null);
+  const [loginUsername, setLoginUsername] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -43,6 +45,35 @@ export default function App() {
     }
   };
 
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/login',
+        { username: loginUsername },
+        { withCredentials: true }
+      );
+      setUsername(loginUsername);
+      setError(null);
+      alert(response.data.message);
+    } catch (err) {
+      console.error('Error logging in:', err);
+      setError(err.response?.data?.error || 'Failed to login. Please try again.');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await axios.post('http://localhost:3000/logout', {}, { withCredentials: true });
+      setUsername(null);
+      setLoginUsername('');
+      setError(null);
+      alert(response.data.message);
+    } catch (err) {
+      console.error('Error logging out:', err);
+      setError('Failed to logout. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchFails();
@@ -66,7 +97,7 @@ export default function App() {
   const handleDeleteFail = async (id) => {
     if (window.confirm('Are you sure you want to delete this fail?')) {
       try {
-        await axios.delete(`http://localhost:3000/failures/${id}`);
+        await axios.delete(`http://localhost:3000/failures/${id}`, { withCredentials: true });
         fetchFails();
         setError(null);
         alert('Fail deleted successfully!');
@@ -90,6 +121,29 @@ export default function App() {
               </video>
               <div className="content">
                 <h1 className="site-title">Silly Autocorrects</h1>
+                <div className="flex justify-center mb-4">
+                  {username ? (
+                    <div className="flex items-center">
+                      <span className="mr-2">Logged in as: {username}</span>
+                      <button onClick={handleLogout} className="submit-btn bg-red-500 hover:bg-red-600">
+                        Logout
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      <input
+                        type="text"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                        placeholder="Enter username"
+                        className="p-2 border rounded mr-2"
+                      />
+                      <button onClick={handleLogin} className="submit-btn">
+                        Login
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <h1>List of Auto-correct Failures</h1>
                 <p className="tagline">Welcome to the most hilarious collection of texting disasters!</p>
                 {error && <p className="text-red-500">{error}</p>}
@@ -126,7 +180,9 @@ export default function App() {
                         created_by: user.id,
                       };
                       try {
-                        const response = await axios.post('http://localhost:3000/failures', formData);
+                        const response = await axios.post('http://localhost:3000/failures', formData, {
+                          withCredentials: true,
+                        });
                         handleAddFail(response.data);
                         e.target.reset();
                       } catch (err) {

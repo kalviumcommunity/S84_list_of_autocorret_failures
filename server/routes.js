@@ -21,6 +21,44 @@ const validateFailure = (req, res, next) => {
   next();
 };
 
+// Login endpoint
+router.post('/login', async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+  try {
+    const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid username' });
+    }
+    // Set username cookie
+    res.cookie('username', username, {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+    res.json({ message: 'Login successful', user: users[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// Logout endpoint
+router.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.json({ message: 'Logout successful' });
+});
+
+router.get('/users', async (req, res) => {
+  try {
+    const [users] = await pool.query('SELECT id, username FROM users');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
 router.post('/failures', validateFailure, async (req, res) => {
   try {
     const [result] = await pool.query(
@@ -33,14 +71,7 @@ router.post('/failures', validateFailure, async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
-router.get('/users', async (req, res) => {
-  try {
-    const [users] = await pool.query('SELECT id, username FROM users');
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
+
 router.get('/failures', async (req, res) => {
   try {
     const [failures] = await pool.query('SELECT * FROM failures');
