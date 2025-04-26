@@ -1,73 +1,49 @@
 const express = require('express');
 const router = express.Router();
-const Failure = require('./failure.model');
+const { pool } = require('./server.js');
 
 const validateFailure = (req, res, next) => {
-  const { text, intended, failLevel, context, submittedBy, created_by } = req.body;
-
-  // Check for missing fields
-  if (!text || !intended || !failLevel || !context || !submittedBy || !created_by) {
-    return res.status(400).json({ error: 'All fields (text, intended, failLevel, context, submittedBy, created_by) are required' });
+  const { text, intended, fail_level, context, submitted_by, created_by } = req.body;
+  if (!text || !intended || !fail_level || !context || !submitted_by || !created_by) {
+    return res.status(400).json({ error: 'All fields are required' });
   }
-
-  // Trim and validate string lengths
-  const trimmedText = text.trim();
-  const trimmedIntended = intended.trim();
-  const trimmedContext = context.trim();
-  const trimmedSubmittedBy = submittedBy.trim();
-  const trimmedCreatedBy = created_by.trim();
-
-  if (
-    trimmedText.length === 0 ||
-    trimmedIntended.length === 0 ||
-    trimmedContext.length === 0 ||
-    trimmedSubmittedBy.length === 0 ||
-    trimmedCreatedBy.length === 0
-  ) {
-    return res.status(400).json({ error: 'All string fields must contain non-whitespace characters' });
+  if (!['low', 'moderate', 'high'].includes(fail_level)) {
+    return res.status(400).json({ error: 'fail_level must be one of: low, moderate, high' });
   }
-
-  if (
-    trimmedText.length > 500 ||
-    trimmedIntended.length > 500 ||
-    trimmedContext.length > 500 ||
-    trimmedSubmittedBy.length > 500 ||
-    trimmedCreatedBy.length > 500
-  ) {
-    return res.status(400).json({ error: 'Text, intended, context, submittedBy, and created_by must not exceed 500 characters' });
-  }
-
-  // Validate failLevel enum
-  if (!['low', 'moderate', 'high'].includes(failLevel.trim().toLowerCase())) {
-    return res.status(400).json({ error: 'failLevel must be one of: low, moderate, high' });
-  }
-
-  // Attach sanitized data to request body
   req.body = {
-    text: trimmedText,
-    intended: trimmedIntended,
-    failLevel: failLevel.trim().toLowerCase(),
-    context: trimmedContext,
-    submittedBy: trimmedSubmittedBy,
-    created_by: trimmedCreatedBy,
+    text: text.trim(),
+    intended: intended.trim(),
+    fail_level: fail_level.trim().toLowerCase(),
+    context: context.trim(),
+    submitted_by: submitted_by.trim(),
+    created_by: parseInt(created_by),
   };
-
   next();
 };
 
 router.post('/failures', validateFailure, async (req, res) => {
   try {
-    const newFailure = new Failure(req.body);
-    await newFailure.save();
-    res.status(201).json(newFailure);
+    const [result] = await pool.query(
+      'INSERT INTO failures (text, intended, fail_level, submitted_by, context, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.body.text, req.body.intended, req.body.fail_level, req.body.submitted_by, req.body.context, req.body.created_by]
+    );
+    const [newFailure] = await pool.query('SELECT * FROM failures WHERE id = ?', [result.insertId]);
+    res.status(201).json(newFailure[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
-
+router.get('/users', async (req, res) => {
+  try {
+    const [users] = await pool.query('SELECT id, username FROM users');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
 router.get('/failures', async (req, res) => {
   try {
-    const failures = await Failure.find();
+    const [failures] = await pool.query('SELECT * FROM failures');
     res.json(failures);
   } catch (err) {
     res.status(500).json({ error: 'Server Error' });
@@ -76,11 +52,23 @@ router.get('/failures', async (req, res) => {
 
 router.get('/failures/:id', async (req, res) => {
   try {
-    const failure = await Failure.findById(req.params.id);
-    if (!failure) {
+    const [failures] = await pool.query('SELECT * FROM failures WHERE id = ?', [req.params.id]);
+    if (failures.length === 0) {
       return res.status(404).json({ error: 'Failure not found' });
     }
-    res.json(failure);
+    res.json(failures[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+router.get('/failures/user/:userId', async (req, res) => {
+  try {
+    const [failures] = await pool.query('SELECT * FROM failures WHERE created_by = ?', [req.params.userId]);
+    if (failures.length === 0) {
+      return res.status(404).json({ error: 'No failures found for this user' });
+    }
+    res.json(failures);
   } catch (err) {
     res.status(500).json({ error: 'Server Error' });
   }
@@ -88,14 +76,15 @@ router.get('/failures/:id', async (req, res) => {
 
 router.put('/failures/:id', validateFailure, async (req, res) => {
   try {
-    const updatedFailure = await Failure.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedFailure) {
+    const [result] = await pool.query(
+      'UPDATE failures SET text = ?, intended = ?, fail_level = ?, submitted_by = ?, context = ?, created_by = ? WHERE id = ?',
+      [req.body.text, req.body.intended, req.body.fail_level, req.body.submitted_by, req.body.context, req.body.created_by, req.params.id]
+    );
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Failure not found' });
     }
-    res.json(updatedFailure);
+    const [updatedFailure] = await pool.query('SELECT * FROM failures WHERE id = ?', [req.params.id]);
+    res.json(updatedFailure[0]);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -103,8 +92,8 @@ router.put('/failures/:id', validateFailure, async (req, res) => {
 
 router.delete('/failures/:id', async (req, res) => {
   try {
-    const deletedFailure = await Failure.findByIdAndDelete(req.params.id);
-    if (!deletedFailure) {
+    const [result] = await pool.query('DELETE FROM failures WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Failure not found' });
     }
     res.json({ message: 'Deleted successfully' });
