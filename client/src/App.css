@@ -27,7 +27,7 @@
   font-size: 3rem;
   color: #fff;
   text-align: center;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Enhanced shadow for readability */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
   animation: fadeIn 1s ease-in;
 }
 
@@ -39,10 +39,12 @@
 }
 
 .info-section {
+  background: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
   padding: 20px;
   margin-bottom: 20px;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Shadow for depth without background */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: #333; /* Dark text for readability on white background */
 }
 
 .submit-form {
@@ -56,8 +58,7 @@
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  color: #fff;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  color: #333;
 }
 
 .form-group input,
@@ -66,7 +67,7 @@
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.9); /* Slight transparency for inputs */
+  background: #fff;
   color: #333;
 }
 
@@ -93,14 +94,14 @@
 }
 
 .fail-card {
-  background: rgba(255, 255, 255, 0.9); /* Transparent white background for cards */
+  background: #fff;
   padding: 15px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   min-width: 300px;
   transition: transform 0.3s;
   animation: fadeIn 1s ease-in;
-  color: #333; /* Dark text for readability on white background */
+  color: #333;
 }
 
 .fail-card:hover {
