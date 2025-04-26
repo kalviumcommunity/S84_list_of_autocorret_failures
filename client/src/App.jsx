@@ -11,7 +11,7 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [error, setError] = useState(null);
-  const [username, setUsername] = useState(null);
+  const [user, setUser] = useState(null);
   const [loginUsername, setLoginUsername] = useState('');
 
   const fetchUsers = async () => {
@@ -52,7 +52,7 @@ export default function App() {
         { username: loginUsername },
         { withCredentials: true }
       );
-      setUsername(loginUsername);
+      setUser(response.data.user);
       setError(null);
       alert(response.data.message);
     } catch (err) {
@@ -64,7 +64,7 @@ export default function App() {
   const handleLogout = async () => {
     try {
       const response = await axios.post('http://localhost:3000/logout', {}, { withCredentials: true });
-      setUsername(null);
+      setUser(null);
       setLoginUsername('');
       setError(null);
       alert(response.data.message);
@@ -122,9 +122,9 @@ export default function App() {
               <div className="content">
                 <h1 className="site-title">Silly Autocorrects</h1>
                 <div className="flex justify-center mb-4">
-                  {username ? (
+                  {user ? (
                     <div className="flex items-center">
-                      <span className="mr-2">Logged in as: {username}</span>
+                      <span className="mr-2">Logged in as: {user.username}</span>
                       <button onClick={handleLogout} className="submit-btn bg-red-500 hover:bg-red-600">
                         Logout
                       </button>
@@ -166,8 +166,12 @@ export default function App() {
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
-                      const user = users.find((u) => u.username === e.target.submittedBy.value);
                       if (!user) {
+                        setError('Please log in to submit a fail.');
+                        return;
+                      }
+                      const userEntry = users.find((u) => u.username === e.target.submittedBy.value);
+                      if (!userEntry) {
                         setError('User does not exist. Please use an existing username.');
                         return;
                       }
@@ -177,7 +181,7 @@ export default function App() {
                         fail_level: e.target.failLevel.value,
                         context: e.target.context.value,
                         submitted_by: e.target.submittedBy.value,
-                        created_by: user.id,
+                        created_by: userEntry.id,
                       };
                       try {
                         const response = await axios.post('http://localhost:3000/failures', formData, {
