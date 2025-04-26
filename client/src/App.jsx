@@ -310,16 +310,11 @@ export default function App() {
                   </div>
                 </section>
                 <section className="info-section">
-                  <h2>Interactive Fail Gallery</h2>
+                  <h2>Fetched Failures</h2>
                   <div className="fail-gallery">
                     {filteredFails.map((fail) => (
                       <div key={fail.id} className="fail-card">
-                        <h3>{fail.text}</h3>
-                        <p><strong>Intended:</strong> {fail.intended}</p>
-                        <p><strong>Level:</strong> {fail.fail_level}</p>
-                        <button onClick={() => handleDeleteFail(fail.id)} className="submit-btn bg-red-500 hover:bg-red-600 mt-2">
-                          Delete
-                        </button>
+                        <AutocorrectFail {...fail} onDelete={() => handleDeleteFail(fail.id)} />
                       </div>
                     ))}
                   </div>
@@ -330,9 +325,7 @@ export default function App() {
                     <div className="fail-gallery">
                       {filteredFails.filter(fail => fail.created_by === user.id).map((fail) => (
                         <div key={fail.id} className="fail-card">
-                          <h3>{fail.text}</h3>
-                          <p><strong>Intended:</strong> {fail.intended}</p>
-                          <p><strong>Level:</strong> {fail.fail_level}</p>
+                          <AutocorrectFail {...fail} />
                         </div>
                       ))}
                     </div>

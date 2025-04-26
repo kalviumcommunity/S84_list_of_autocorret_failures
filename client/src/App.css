@@ -1,6 +1,5 @@
 .app-container {
   font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
   min-height: 100vh;
   padding: 20px;
   color: #333;
@@ -32,23 +31,55 @@
   animation: fadeIn 1s ease-in;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.tagline {
+  text-align: center;
+  color: #fff;
+  font-style: italic;
+}
+
+.info-section {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.submit-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 .submit-btn {
-  background: #ff6f61;
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
   color: #fff;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: transform 0.3s, background 0.3s;
 }
 
 .submit-btn:hover {
-  background: #e65b50;
+  transform: scale(1.05);
+  background: linear-gradient(90deg, #00f2fe, #4facfe);
 }
 
 .fail-gallery {
@@ -65,6 +96,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   min-width: 300px;
   transition: transform 0.3s;
+  animation: fadeIn 1s ease-in;
 }
 
 .fail-card:hover {
@@ -83,9 +115,18 @@
   z-index: 1000;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes slideIn {
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
+}
+
+.text-red-500 {
+  color: #ef4444;
 }
 
 @media (max-width: 768px) {
