@@ -1,6 +1,5 @@
 import './App.css';
 import AutocorrectFail from './components/AutocorrectFail';
-import AddFailureForm from './components/AddFailureForm';
 import UpdateFailurePage from './components/UpdateFailurePage';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -8,12 +7,21 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 export default function App() {
   const [fails, setFails] = useState([]);
+  const [filteredFails, setFilteredFails] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('all');
   const [error, setError] = useState(null);
 
   const fetchFails = () => {
     axios
       .get('http://localhost:3000/failures')
-      .then((res) => setFails(res.data))
+      .then((res) => {
+        setFails(res.data);
+        setFilteredFails(res.data);
+        // Extract unique users from fails
+        const uniqueUsers = [...new Set(res.data.map((fail) => fail.created_by))];
+        setUsers(uniqueUsers);
+      })
       .catch((err) => {
         console.error('Error fetching fails:', err);
         setError('Failed to fetch fails. Please try again.');
@@ -24,8 +32,17 @@ export default function App() {
     fetchFails();
   }, []);
 
+  useEffect(() => {
+    if (selectedUser === 'all') {
+      setFilteredFails(fails);
+    } else {
+      setFilteredFails(fails.filter((fail) => fail.created_by === selectedUser));
+    }
+  }, [selectedUser, fails]);
+
   const handleAddFail = (newFail) => {
     setFails([...fails, newFail]);
+    setFilteredFails([...fails, newFail]);
     setError(null);
     alert('New fail added successfully!');
   };
@@ -85,6 +102,7 @@ export default function App() {
                         failLevel: e.target.failLevel.value,
                         context: e.target.context.value,
                         submittedBy: e.target.submittedBy.value,
+                        created_by: e.target.submittedBy.value, // Use submittedBy as created_by
                       };
                       axios
                         .post('http://localhost:3000/failures', formData)
@@ -150,14 +168,35 @@ export default function App() {
                   {error && <p className="text-red-500 mt-2">{error}</p>}
                 </section>
                 <section className="info-section">
+                  <h2>Filter Failures by User</h2>
+                  <div className="form-group">
+                    <label>Select User</label>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                    >
+                      <option value="all">All Users</option>
+                      {users.map((user) => (
+                        <option key={user} value={user}>
+                          {user}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </section>
+                <section className="info-section">
                   <h2>Fetched Failures</h2>
-                  {fails.map((fail) => (
-                    <AutocorrectFail
-                      key={fail._id}
-                      {...fail}
-                      onDelete={() => handleDeleteFail(fail._id)}
-                    />
-                  ))}
+                  {filteredFails.length === 0 ? (
+                    <p>No fails found for this user.</p>
+                  ) : (
+                    filteredFails.map((fail) => (
+                      <AutocorrectFail
+                        key={fail._id}
+                        {...fail}
+                        onDelete={() => handleDeleteFail(fail._id)}
+                      />
+                    ))
+                  )}
                 </section>
               </div>
             </div>

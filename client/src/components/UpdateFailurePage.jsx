@@ -11,6 +11,7 @@ export default function UpdateFailurePage() {
     failLevel: 'moderate',
     context: '',
     submittedBy: '',
+    created_by: '',
   });
   const [error, setError] = useState(null);
 
@@ -88,6 +89,16 @@ export default function UpdateFailurePage() {
                 type="text"
                 name="submittedBy"
                 value={formData.submittedBy}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Created By</label>
+              <input
+                type="text"
+                name="created_by"
+                value={formData.created_by}
                 onChange={handleChange}
                 required
               />
