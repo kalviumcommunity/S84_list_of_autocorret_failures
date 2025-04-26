@@ -92,7 +92,7 @@ export default function App() {
   useEffect(() => {
     fetchUsers();
     fetchFails();
-    const interval = setInterval(handleRefreshToken, 30 * 60 * 1000); // Refresh every 30 minutes
+    const interval = setInterval(handleRefreshToken, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -150,7 +150,7 @@ export default function App() {
             <div className="app-container">
               <video autoPlay loop muted className="background-video">
                 <source src="/123.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
+                Your browser does not support the video tag or the video file is missing.
               </video>
               <div className="content">
                 <h1 className="site-title">Silly Autocorrects</h1>
