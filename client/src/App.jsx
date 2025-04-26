@@ -9,36 +9,52 @@ export default function App() {
   const [fails, setFails] = useState([]);
   const [filteredFails, setFilteredFails] = useState([]);
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState('all');
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [error, setError] = useState(null);
 
-  const fetchFails = () => {
-    axios
-      .get('http://localhost:3000/failures')
-      .then((res) => {
-        setFails(res.data);
-        setFilteredFails(res.data);
-        // Extract unique users from fails
-        const uniqueUsers = [...new Set(res.data.map((fail) => fail.created_by))];
-        setUsers(uniqueUsers);
-      })
-      .catch((err) => {
-        console.error('Error fetching fails:', err);
-        setError('Failed to fetch fails. Please try again.');
-      });
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/users');
+      setUsers(response.data);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to fetch users. Please try again.');
+    }
+  };
+
+  const fetchFails = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/failures');
+      setFails(response.data);
+      setFilteredFails(response.data);
+    } catch (err) {
+      console.error('Error fetching fails:', err);
+      setError('Failed to fetch fails. Please try again.');
+    }
+  };
+
+  const fetchFailsByUser = async (userId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/failures/user/${userId}`);
+      setFilteredFails(response.data);
+    } catch (err) {
+      console.error('Error fetching fails by user:', err);
+      setError('Failed to fetch fails for this user. Please try again.');
+    }
   };
 
   useEffect(() => {
+    fetchUsers();
     fetchFails();
   }, []);
 
   useEffect(() => {
-    if (selectedUser === 'all') {
-      setFilteredFails(fails);
+    if (selectedUserId) {
+      fetchFailsByUser(selectedUserId);
     } else {
-      setFilteredFails(fails.filter((fail) => fail.created_by === selectedUser));
+      setFilteredFails(fails);
     }
-  }, [selectedUser, fails]);
+  }, [selectedUserId, fails]);
 
   const handleAddFail = (newFail) => {
     setFails([...fails, newFail]);
@@ -51,7 +67,7 @@ export default function App() {
     if (window.confirm('Are you sure you want to delete this fail?')) {
       try {
         await axios.delete(`http://localhost:3000/failures/${id}`);
-        fetchFails(); // Refresh list
+        fetchFails();
         setError(null);
         alert('Fail deleted successfully!');
       } catch (err) {
@@ -94,26 +110,29 @@ export default function App() {
                 <section className="info-section submit-form">
                   <h2>Submit a New Autocorrect Fail</h2>
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
+                      const user = users.find((u) => u.username === e.target.submittedBy.value);
+                      if (!user) {
+                        setError('User does not exist. Please use an existing username.');
+                        return;
+                      }
                       const formData = {
                         text: e.target.text.value,
                         intended: e.target.intended.value,
-                        failLevel: e.target.failLevel.value,
+                        fail_level: e.target.failLevel.value,
                         context: e.target.context.value,
-                        submittedBy: e.target.submittedBy.value,
-                        created_by: e.target.submittedBy.value, // Use submittedBy as created_by
+                        submitted_by: e.target.submittedBy.value,
+                        created_by: user.id,
                       };
-                      axios
-                        .post('http://localhost:3000/failures', formData)
-                        .then((res) => {
-                          handleAddFail(res.data);
-                          e.target.reset();
-                        })
-                        .catch((err) => {
-                          console.error('Error submitting fail:', err);
-                          setError('Failed to submit fail. Please try again.');
-                        });
+                      try {
+                        const response = await axios.post('http://localhost:3000/failures', formData);
+                        handleAddFail(response.data);
+                        e.target.reset();
+                      } catch (err) {
+                        console.error('Error submitting fail:', err);
+                        setError('Failed to submit fail. Please try again.');
+                      }
                     }}
                     className="fail-form"
                   >
@@ -149,7 +168,7 @@ export default function App() {
                       <input
                         type="text"
                         name="submittedBy"
-                        placeholder="Your name or nickname"
+                        placeholder="Enter username (e.g., john_doe)"
                         required
                       />
                     </div>
@@ -172,13 +191,13 @@ export default function App() {
                   <div className="form-group">
                     <label>Select User</label>
                     <select
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
+                      value={selectedUserId || ''}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
                     >
-                      <option value="all">All Users</option>
+                      <option value="">All Users</option>
                       {users.map((user) => (
-                        <option key={user} value={user}>
-                          {user}
+                        <option key={user.id} value={user.id}>
+                          {user.username}
                         </option>
                       ))}
                     </select>
@@ -191,9 +210,9 @@ export default function App() {
                   ) : (
                     filteredFails.map((fail) => (
                       <AutocorrectFail
-                        key={fail._id}
+                        key={fail.id}
                         {...fail}
-                        onDelete={() => handleDeleteFail(fail._id)}
+                        onDelete={() => handleDeleteFail(fail.id)}
                       />
                     ))
                   )}

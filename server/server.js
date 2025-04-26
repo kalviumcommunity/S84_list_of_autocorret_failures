@@ -1,102 +1,55 @@
+require('dotenv').config();
 const express = require('express');
-const router = express.Router();
-const Failure = require('./failure.model');
+const mysql = require('mysql2/promise');
+const cors = require('cors');
+const failureRoutes = require('./routes');
 
-const validateFailure = (req, res, next) => {
-  const { text, intended, failLevel, context, submittedBy } = req.body;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-  // Check for missing fields
-  if (!text || !intended || !failLevel || !context || !submittedBy) {
-    return res.status(400).json({ error: 'All fields (text, intended, failLevel, context, submittedBy) are required' });
-  }
+app.use(cors());
+app.use(express.json());
 
-  // Trim and validate string lengths
-  const trimmedText = text.trim();
-  const trimmedIntended = intended.trim();
-  const trimmedContext = context.trim();
-  const trimmedSubmittedBy = submittedBy.trim();
+// MySQL connection configuration
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'asap_project',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-  if (trimmedText.length === 0 || trimmedIntended.length === 0 || trimmedContext.length === 0 || trimmedSubmittedBy.length === 0) {
-    return res.status(400).json({ error: 'All string fields must contain non-whitespace characters' });
-  }
+app.use('/', failureRoutes);
 
-  if (trimmedText.length > 500 || trimmedIntended.length > 500 || trimmedContext.length > 500 || trimmedSubmittedBy.length > 500) {
-    return res.status(400).json({ error: 'Text, intended, context, and submittedBy must not exceed 500 characters' });
-  }
-
-  // Validate failLevel enum
-  if (!['low', 'moderate', 'high'].includes(failLevel.trim().toLowerCase())) {
-    return res.status(400).json({ error: 'failLevel must be one of: low, moderate, high' });
-  }
-
-  // Attach sanitized data to request body
-  req.body = {
-    text: trimmedText,
-    intended: trimmedIntended,
-    failLevel: failLevel.trim().toLowerCase(),
-    context: trimmedContext,
-    submittedBy: trimmedSubmittedBy,
-  };
-
-  next();
-};
-
-router.post('/failures', validateFailure, async (req, res) => {
+app.listen(PORT, async () => {
+  console.log(`Server running on http://localhost:${PORT}`);
   try {
-    const newFailure = new Failure(req.body);
-    await newFailure.save();
-    res.status(201).json(newFailure);
+    // Create tables if they don't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS failures (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        text VARCHAR(500) NOT NULL,
+        intended VARCHAR(500) NOT NULL,
+        fail_level ENUM('low', 'moderate', 'high') NOT NULL,
+        submitted_by VARCHAR(50) NOT NULL,
+        context VARCHAR(500) NOT NULL,
+        created_by INT NOT NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+    console.log('Database schema initialized');
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Database initialization error:', err);
   }
 });
 
-router.get('/failures', async (req, res) => {
-  try {
-    const failures = await Failure.find();
-    res.json(failures);
-  } catch (err) {
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
-
-router.get('/failures/:id', async (req, res) => {
-  try {
-    const failure = await Failure.findById(req.params.id);
-    if (!failure) {
-      return res.status(404).json({ error: 'Failure not found' });
-    }
-    res.json(failure);
-  } catch (err) {
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
-
-router.put('/failures/:id', validateFailure, async (req, res) => {
-  try {
-    const updatedFailure = await Failure.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedFailure) {
-      return res.status(404).json({ error: 'Failure not found' });
-    }
-    res.json(updatedFailure);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-router.delete('/failures/:id', async (req, res) => {
-  try {
-    const deletedFailure = await Failure.findByIdAndDelete(req.params.id);
-    if (!deletedFailure) {
-      return res.status(404).json({ error: 'Failure not found' });
-    }
-    res.json({ message: 'Deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
-
-module.exports = router;
+module.exports = { pool };

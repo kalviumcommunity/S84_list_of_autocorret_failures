@@ -8,14 +8,25 @@ export default function UpdateFailurePage() {
   const [formData, setFormData] = useState({
     text: '',
     intended: '',
-    failLevel: 'moderate',
+    fail_level: 'moderate',
     context: '',
-    submittedBy: '',
+    submitted_by: '',
     created_by: '',
   });
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/users');
+        setUsers(response.data);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Failed to load users. Please try again.');
+      }
+    };
+    fetchUsers();
     axios
       .get(`http://localhost:3000/failures/${id}`)
       .then((res) => setFormData(res.data))
@@ -87,25 +98,31 @@ export default function UpdateFailurePage() {
               <label>Submitted By</label>
               <input
                 type="text"
-                name="submittedBy"
-                value={formData.submittedBy}
+                name="submitted_by"
+                value={formData.submitted_by}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="form-group">
               <label>Created By</label>
-              <input
-                type="text"
+              <select
                 name="created_by"
                 value={formData.created_by}
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">Select User</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.username}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Fail Level</label>
-              <select name="failLevel" value={formData.failLevel} onChange={handleChange}>
+              <select name="fail_level" value={formData.fail_level} onChange={handleChange}>
                 <option value="low">Low</option>
                 <option value="moderate">Moderate</option>
                 <option value="high">High</option>
