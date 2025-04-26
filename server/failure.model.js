@@ -22,6 +22,10 @@ const failureSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  created_by: {
+    type: String,
+    required: true,
+  },
   timestamp: {
     type: Date,
     default: Date.now,

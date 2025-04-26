@@ -3,13 +3,55 @@ const router = express.Router();
 const Failure = require('./failure.model');
 
 const validateFailure = (req, res, next) => {
-  const { text, intended, failLevel, context, submittedBy } = req.body;
-  if (!text || !intended || !failLevel || !context || !submittedBy) {
-    return res.status(400).json({ error: 'All fields are required' });
+  const { text, intended, failLevel, context, submittedBy, created_by } = req.body;
+
+  // Check for missing fields
+  if (!text || !intended || !failLevel || !context || !submittedBy || !created_by) {
+    return res.status(400).json({ error: 'All fields (text, intended, failLevel, context, submittedBy, created_by) are required' });
   }
-  if (!['low', 'moderate', 'high'].includes(failLevel)) {
-    return res.status(400).json({ error: 'Invalid failLevel. Must be low, moderate, or high' });
+
+  // Trim and validate string lengths
+  const trimmedText = text.trim();
+  const trimmedIntended = intended.trim();
+  const trimmedContext = context.trim();
+  const trimmedSubmittedBy = submittedBy.trim();
+  const trimmedCreatedBy = created_by.trim();
+
+  if (
+    trimmedText.length === 0 ||
+    trimmedIntended.length === 0 ||
+    trimmedContext.length === 0 ||
+    trimmedSubmittedBy.length === 0 ||
+    trimmedCreatedBy.length === 0
+  ) {
+    return res.status(400).json({ error: 'All string fields must contain non-whitespace characters' });
   }
+
+  if (
+    trimmedText.length > 500 ||
+    trimmedIntended.length > 500 ||
+    trimmedContext.length > 500 ||
+    trimmedSubmittedBy.length > 500 ||
+    trimmedCreatedBy.length > 500
+  ) {
+    return res.status(400).json({ error: 'Text, intended, context, submittedBy, and created_by must not exceed 500 characters' });
+  }
+
+  // Validate failLevel enum
+  if (!['low', 'moderate', 'high'].includes(failLevel.trim().toLowerCase())) {
+    return res.status(400).json({ error: 'failLevel must be one of: low, moderate, high' });
+  }
+
+  // Attach sanitized data to request body
+  req.body = {
+    text: trimmedText,
+    intended: trimmedIntended,
+    failLevel: failLevel.trim().toLowerCase(),
+    context: trimmedContext,
+    submittedBy: trimmedSubmittedBy,
+    created_by: trimmedCreatedBy,
+  };
+
   next();
 };
 
